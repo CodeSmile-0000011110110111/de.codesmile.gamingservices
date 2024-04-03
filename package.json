@@ -1,0 +1,20 @@
+{
+  "name": "de.codesmile.gamingservices",
+  "displayName": "CodeSmile Gaming Services",
+  "description": "Extensions for Unity Gaming Services.",
+  "version": "0.1.0",
+  "unity": "2023.3",
+  "unityRelease": "0b10",
+  "author": {
+    "name": "Steffen Itterheim aka 'CodeSmile' (Unity MVP, Self-Employed)",
+    "email": "steffen@steffenitterheim.de",
+    "url": "https://github.com/CodeSmile-0000011110110111/de.codesmile.gamingservices"
+  },
+  "changelogUrl": "https://github.com/CodeSmile-0000011110110111/de.codesmile.gamingservices/tree/main/CHANGELOG.md",
+  "documentationUrl": "https://github.com/CodeSmile-0000011110110111/de.codesmile.gamingservices/tree/main/README.md",
+  "licensesUrl": "https://github.com/CodeSmile-0000011110110111/de.codesmile.gamingservices/tree/main/LICENSE",
+  "dependencies": {
+    "com.unity.test-framework": "1.4.1"
+  },
+  "relatedPackages": {}
+}
