@@ -32,7 +32,7 @@ namespace CodeSmile.GamingServices.Authentication
 
 		public static async Task ShowAll(List<Notification> notifications)
 		{
-			if (notifications == null)
+			if (notifications == null || notifications.Count == 0)
 				return;
 
 			foreach (var notification in notifications)

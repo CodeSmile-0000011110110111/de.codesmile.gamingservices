@@ -19,11 +19,13 @@ namespace CodeSmile.GamingServices
 
 			try
 			{
+				Debug.Log("Initializing Unity Services ...");
 				await UnityServices.InitializeAsync();
 				Authenticate.OnServicesInitialized();
 			}
 			catch (Exception e)
 			{
+				// TODO: optionally present this to user
 				Debug.LogError($"Failed to initialize Unity Services: {e}");
 				throw;
 			}
@@ -32,6 +34,7 @@ namespace CodeSmile.GamingServices
 		[RuntimeInitializeOnLoadMethod]
 		private static async void OnRuntimeLoad()
 		{
+			// TODO: auto-init only if requested (should be a setting)
 			try { await Initialize(); }
 			catch (Exception) {}
 		}

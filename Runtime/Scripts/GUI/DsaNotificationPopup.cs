@@ -49,11 +49,11 @@ namespace CodeSmile.GamingServices
 		protected override void OnShowGUI()
 		{
 			base.OnShowGUI();
-			UpdateMessage();
+			UpdateContent();
 			OnRegisterEvents();
 		}
 
-		private void UpdateMessage() => FindFirst<TextField>(NotificationName).value = GetNotificationAsText();
+		private void UpdateContent() => FindFirst<TextField>(NotificationName).value = GetNotificationAsText();
 
 		private String GetNotificationAsText() => $"{m_Notification.Message}\n\n" +
 		                                          $"Case ID: {m_Notification.CaseId}\n" +
@@ -128,9 +128,9 @@ namespace CodeSmile.GamingServices
 		[SerializeField] private TestNotification m_TestNotification;
 		[SerializeField] private Boolean m_ShowPopup;
 
-		private async void OnValidate() => await TryShowPopup();
+		private void OnValidate() => TryShowPopup();
 
-		private async Task TryShowPopup()
+		private void TryShowPopup()
 		{
 			if (m_ShowPopup)
 			{
@@ -141,7 +141,14 @@ namespace CodeSmile.GamingServices
 					return;
 				}
 
-				m_ShowPopup = await ShowModal(NotificationFromTestNotification());
+				if (gameObject.activeSelf)
+				{
+					Debug.LogWarning("Popup already showing...");
+					m_ShowPopup = false;
+					return;
+				}
+
+				EditorApplication.delayCall += async () => m_ShowPopup = await ShowModal(NotificationFromTestNotification());
 			}
 		}
 
