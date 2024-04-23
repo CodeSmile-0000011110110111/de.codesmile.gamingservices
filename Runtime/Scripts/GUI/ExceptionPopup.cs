@@ -26,13 +26,17 @@ namespace CodeSmile.GamingServices
 		private static TaskCompletionSource<Boolean> s_ShowModalPopup;
 
 		private Exception m_Exception;
+		private String m_ErrorMessage;
 
-		public static async Task<Boolean> ShowModal(Exception exception)
+		public static async Task<Boolean> ShowModal(Exception exception, String errorMessage)
 		{
 			if (s_Instance == null)
-				throw new InvalidOperationException($"No loaded instance of {nameof(ExceptionPopup)} available");
+			{
+				Debug.LogWarning($"No instance of {nameof(ExceptionPopup)} in scene");
+				return false;
+			}
 
-			return await s_Instance.Show(exception);
+			return await s_Instance.Show(exception, errorMessage);
 		}
 
 		private void Awake()
@@ -47,6 +51,20 @@ namespace CodeSmile.GamingServices
 		{
 			base.OnDestroy();
 			Hide();
+		}
+
+		private async Task<Boolean> Show(Exception exception, String errorMessage)
+		{
+			if (s_ShowModalPopup != null)
+				throw new InvalidOperationException("popup already showing");
+
+			m_Exception = exception;
+			m_ErrorMessage = errorMessage;
+
+			gameObject.SetActive(true);
+
+			s_ShowModalPopup = new TaskCompletionSource<Boolean>();
+			return await s_ShowModalPopup.Task;
 		}
 
 		protected override void OnShowGUI()
@@ -64,18 +82,16 @@ namespace CodeSmile.GamingServices
 
 		private String GetExceptionTitle()
 		{
-			var exceptionType = m_Exception.GetType().Name;
-			if (exceptionType.EndsWith(nameof(Exception)))
-				exceptionType = exceptionType.Substring(0, exceptionType.Length - nameof(Exception).Length);
-
-			var title = $"{exceptionType} Error";
+			string title;
 			if (m_Exception is RequestFailedException requestFailed)
-				title += $" {requestFailed.ErrorCode}";
+				title = $"Error {requestFailed.ErrorCode}";
+			else
+				title = m_Exception?.GetType().Name;
 
-			return title;
+			return $"{title}: {m_ErrorMessage}";
 		}
 
-		private String GetExceptionMessage() => m_Exception.Message;
+		private String GetExceptionMessage() => m_Exception?.Message;
 
 		protected override void OnRegisterEvents()
 		{
@@ -103,19 +119,8 @@ namespace CodeSmile.GamingServices
 		private void OnClose()
 		{
 			m_Exception = default;
+			m_ErrorMessage = default;
 			Hide();
-		}
-
-		private async Task<Boolean> Show(Exception exception)
-		{
-			if (s_ShowModalPopup != null)
-				throw new InvalidOperationException("popup already showing");
-
-			m_Exception = exception;
-			gameObject.SetActive(true);
-
-			s_ShowModalPopup = new TaskCompletionSource<Boolean>();
-			return await s_ShowModalPopup.Task;
 		}
 
 		private void Hide()
@@ -149,8 +154,9 @@ namespace CodeSmile.GamingServices
 					return;
 				}
 
-				var ex = AuthenticationException.Create(10000, "test exception");
-				EditorApplication.delayCall += async () => m_ShowPopup = await ShowModal(ex);
+				var msg = $"TEST {nameof(ExceptionPopup)}";
+				var ex = AuthenticationException.Create(10000, msg);
+				EditorApplication.delayCall += async () => m_ShowPopup = await ShowModal(ex, msg);
 			}
 		}
 #endif

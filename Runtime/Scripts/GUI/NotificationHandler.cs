@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace CodeSmile.GamingServices.Authentication
 {
-	public static class Notifications
+	internal static class NotificationHandler
 	{
 		private const String NotificationDateKey = "CodeSmile.GamingServices.Authentication.NotificationDate";
 		private static Int64 LastNotificationDate
@@ -41,7 +41,7 @@ namespace CodeSmile.GamingServices.Authentication
 
 		private static async Task ShowNotification(Notification notification)
 		{
-			await DsaNotificationPopup.ShowModal(notification);
+			await NotificationPopup.ShowModal(notification);
 
 			if (Int64.TryParse(notification.CreatedAt, out var createdDate) && createdDate > LastNotificationDate)
 				LastNotificationDate = createdDate;

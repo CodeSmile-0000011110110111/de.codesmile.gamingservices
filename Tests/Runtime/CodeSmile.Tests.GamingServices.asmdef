@@ -3,6 +3,9 @@
     "rootNamespace": "CodeSmile.Tests",
     "references": [
         "UnityEngine.TestRunner",
+        "Unity.Services.Core",
+        "Unity.Services.Core.Environments",
+        "Unity.Services.Authentication",
         "CodeSmile.GamingServices"
     ],
     "includePlatforms": [],

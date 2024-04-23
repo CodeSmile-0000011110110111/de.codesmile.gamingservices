@@ -2,9 +2,10 @@
     "name": "CodeSmile.GamingServices",
     "rootNamespace": "CodeSmile.GamingServices",
     "references": [
-        "GUID:5540e30183c82e84b954c033c388e06c",
         "GUID:fe25561d224ed4743af4c60938a59d0b",
         "GUID:70ea675efa2644cef98c7ece24158333",
+        "GUID:5540e30183c82e84b954c033c388e06c",
+        "GUID:9f589beecac4b0647ad2197f9cb3d505",
         "GUID:e24f30608cf04354be70b7062aa0ad2b",
         "GUID:f74b9f973d314074b78950ab842866ef"
     ],

@@ -12,14 +12,14 @@ using UnityEngine.UIElements;
 namespace CodeSmile.GamingServices
 {
 	[RequireComponent(typeof(UIDocument))]
-	public class DsaNotificationPopup : GuiBehaviour
+	public class NotificationPopup : GuiBehaviour
 	{
 		private const String NotificationName = "Notification";
 		private const String CopyButtonName = "CopyButton";
 		private const String CloseButtonName = "CloseButton";
-		private const String PopupGroupName = "PopupGroup";
+		//private const String PopupGroupName = "PopupGroup";
 
-		private static DsaNotificationPopup s_Instance;
+		private static NotificationPopup s_Instance;
 		private static TaskCompletionSource<Boolean> s_ShowModalPopup;
 
 		private Notification m_Notification;
@@ -27,7 +27,10 @@ namespace CodeSmile.GamingServices
 		public static async Task<Boolean> ShowModal(Notification notification)
 		{
 			if (s_Instance == null)
-				throw new InvalidOperationException($"No loaded instance of {nameof(DsaNotificationPopup)} available");
+			{
+				Debug.LogWarning($"No instance of {nameof(NotificationPopup)} in scene");
+				return false;
+			}
 
 			return await s_Instance.Show(notification);
 		}
@@ -35,7 +38,7 @@ namespace CodeSmile.GamingServices
 		private void Awake()
 		{
 			if (s_Instance != null)
-				throw new InvalidOperationException($"Only one instance of {nameof(DsaNotificationPopup)} allowed");
+				throw new InvalidOperationException($"Only one instance of {nameof(NotificationPopup)} allowed");
 
 			s_Instance = this;
 		}

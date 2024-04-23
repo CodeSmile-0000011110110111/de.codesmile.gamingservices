@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Unity.Services.Authentication;
+using Unity.Services.Core;
 using UnityEditor;
 using UnityEngine;
 
@@ -13,6 +14,7 @@ namespace CodeSmile.GamingServices.Authentication
 {
 	public static class Account
 	{
+		public static event Action OnBeforeDeleteAccount;
 		public const Int32 MinPlayerNameLength = 1;
 		public const Int32 MaxPlayerNameLength = 50;
 		public const Int32 MinUserNameLength = 3;
@@ -20,9 +22,32 @@ namespace CodeSmile.GamingServices.Authentication
 		public const Int32 MinPasswordLength = 8;
 		public const Int32 MaxPasswordLength = 30;
 
-		private static readonly String UserNameCharacterClass = @"a-zA-Z0-9\-_.@";
-		private static readonly String NegatedUserNamePattern = $"[^{UserNameCharacterClass}]";
-		private static readonly String PasswordPattern = @"(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[ !""#$%&'´`()*+-.,/\\:;<=>?@^_{|}~\[\]])";
+		/// <summary>
+		///     Regex character class with valid user name letters, digits and symbols.
+		/// </summary>
+		/// <remarks>
+		///     "Letters" are lower ASCII (65-122) letters only. Extended ASCII or Unicode letters (ÖÔØ etc) are not allowed.
+		/// </remarks>
+		public static readonly String UserNameCharacterClass = @"a-zA-Z0-9\-_.@";
+
+		/// <summary>
+		///     Regex pattern that matches a valid user name.
+		/// </summary>
+		public static readonly String UserNamePattern = $"^[{UserNameCharacterClass}]+$";
+
+		/// <summary>
+		///     Regex pattern that matches any invalid character in a user name.
+		/// </summary>
+		public static readonly String NotUserNamePattern = $"[^{UserNameCharacterClass}]";
+
+		/// <summary>
+		///     Regex pattern that matches a valid password string.
+		/// </summary>
+		/// <remarks>
+		///     Not all symbols have been tested to be allowed. Waiting for confirmation.
+		/// </remarks>
+		public static readonly String PasswordPattern =
+			@"(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!""#$%&'´`()*+-.,/\\:;<=>?@^_{|}~\[\]])";
 
 		private static IAuthenticationService AuthService => AuthenticationService.Instance;
 
@@ -81,7 +106,7 @@ namespace CodeSmile.GamingServices.Authentication
 			var name = userName.RemoveWhitespace();
 			name = name.Length > MaxUserNameLength ? name.Substring(0, MaxUserNameLength) : name;
 
-			return Regex.Replace(name, NegatedUserNamePattern, "_");
+			return Regex.Replace(name, NotUserNamePattern, "_");
 		}
 
 		/// <summary>
@@ -123,8 +148,41 @@ namespace CodeSmile.GamingServices.Authentication
 		/// </summary>
 		/// <remarks>If the player name is already cached the call returns instantly.</remarks>
 		/// <returns></returns>
-		public static async Task<String> GetPlayerNameAsync() =>
-			AuthService.PlayerName ?? await AuthService.GetPlayerNameAsync();
+		public static async Task<String> GetPlayerNameAsync()
+		{
+			var name = AuthService.PlayerName;
+			if (string.IsNullOrEmpty(name))
+			{
+				try
+				{
+					name = await AuthService.GetPlayerNameAsync();
+				}
+				catch (RequestFailedException ex)
+				{
+					ExceptionHandler.Handle(ex);
+				}
+			}
+
+			return name;
+		}
+
+		public static async Task<PlayerInfo> GetPlayerInfoAsync()
+		{
+			var info = AuthService.PlayerInfo;
+			if (info == null)
+			{
+				try
+				{
+					info = await AuthService.GetPlayerInfoAsync();
+				}
+				catch (RequestFailedException ex)
+				{
+					ExceptionHandler.Handle(ex);
+				}
+			}
+
+			return info;
+		}
 
 		/// <summary>
 		///     Updates the player name in the cloud.
@@ -135,6 +193,20 @@ namespace CodeSmile.GamingServices.Authentication
 		{
 			var sanitizedName = SanitizePlayerName(playerName);
 			await AuthService.UpdatePlayerNameAsync(sanitizedName);
+		}
+
+		/// <summary>
+		///     Deletes the user account.
+		/// </summary>
+		/// <remarks>
+		///     CAUTION: does not delete player data in other services.
+		///     Subscribe to the OnBeforeDeleteAccount event to perform data deletion.
+		/// </remarks>
+		public static async void DeleteAsync()
+		{
+			OnBeforeDeleteAccount?.Invoke();
+
+			await AuthService.DeleteAccountAsync();
 		}
 	}
 }

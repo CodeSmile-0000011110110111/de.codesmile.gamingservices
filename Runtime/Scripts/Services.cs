@@ -21,22 +21,16 @@ namespace CodeSmile.GamingServices
 			{
 				Debug.Log("Initializing Unity Services ...");
 				await UnityServices.InitializeAsync();
+
 				Authenticate.OnServicesInitialized();
 			}
-			catch (Exception e)
+			catch (Exception ex)
 			{
-				// TODO: optionally present this to user
-				Debug.LogError($"Failed to initialize Unity Services: {e}");
-				throw;
+				ExceptionHandler.Handle(ex);
 			}
 		}
 
-		[RuntimeInitializeOnLoadMethod]
-		private static async void OnRuntimeLoad()
-		{
-			// TODO: auto-init only if requested (should be a setting)
-			try { await Initialize(); }
-			catch (Exception) {}
-		}
+		// TODO: auto-init only if requested (should be a setting)
+		//[RuntimeInitializeOnLoadMethod] private static async void OnRuntimeLoad() => await Initialize();
 	}
 }

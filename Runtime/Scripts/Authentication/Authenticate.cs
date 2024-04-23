@@ -10,9 +10,11 @@ using UnityEngine;
 
 namespace CodeSmile.GamingServices.Authentication
 {
-	public static class Authenticate
+	public static partial class Authenticate
 	{
 		private static IAuthenticationService Service => AuthenticationService.Instance;
+		public static Boolean RethrowExceptions { get; set; } = false;
+		public static Boolean PopupExceptions { get; set; } = true;
 
 		public static void LogState()
 		{
@@ -26,60 +28,7 @@ namespace CodeSmile.GamingServices.Authentication
 			}
 		}
 
-		public static async Task SignInAnonymouslyAsync()
-		{
-			Debug.Log($"Sign in anonymously: {(Service.SessionTokenExists ? "cached player" : "new player")}");
-			await SignInHandler(async () => await Service.SignInAnonymouslyAsync());
-			SignUpWithUsernamePasswordAsync("test_user", "123ABcd!");
-		}
-
-		public static async Task SignUpWithUsernamePasswordAsync(String userName, String password)
-		{
-			//if (Account.IsValidUserName(userName))
-
-			Debug.Log($"Sign in with username/password: {(Service.SessionTokenExists ? "cached player" : "new player")}");
-			await SignInHandler(async () =>
-			{
-				if (Service.IsSignedIn)
-					await Service.AddUsernamePasswordAsync(userName, password);
-				else
-					await Service.SignUpWithUsernamePasswordAsync(userName, password);
-			});
-		}
-
-		internal static async void OnServicesInitialized()
-		{
-			RegisterAuthenticationEvents();
-			await SignInAnonymouslyAsync();
-		}
-
-		private static async Task SignInHandler(Func<Task> signInFunc)
-		{
-			try
-			{
-				await Services.Initialize();
-				await signInFunc?.Invoke();
-				await Notifications.ShowDsa();
-			}
-			catch (AuthenticationException ex)
-			{
-				// TODO: Compare error code to AuthenticationErrorCodes
-				// Notify the player with the proper error message
-				Debug.LogError($"Authentication failed: [{ex.ErrorCode}] {ex}");
-				if (ex.Notifications != null && ex.Notifications.Count > 0)
-					Debug.LogError($"notifications: {ex.Notifications}");
-
-				await Notifications.ShowAll(ex.Notifications);
-				await ExceptionPopup.ShowModal(ex);
-			}
-			catch (RequestFailedException ex)
-			{
-				// TODO: Compare error code to CommonErrorCodes
-				// Notify the player with the proper error message
-				Debug.LogError($"Request failed: [{ex.ErrorCode}] {ex}");
-				await ExceptionPopup.ShowModal(ex);
-			}
-		}
+		internal static void OnServicesInitialized() => RegisterAuthenticationEvents();
 
 		private static void RegisterAuthenticationEvents()
 		{
@@ -101,16 +50,36 @@ namespace CodeSmile.GamingServices.Authentication
 
 		private static async void OnSignedIn()
 		{
-			var playerName = await Account.GetPlayerNameAsync();
-
-			Debug.Log($"OnSignedIn: ID={Service.PlayerId}, Name={playerName}, Token={Service.AccessToken}");
+			try
+			{
+				var playerName = await Account.GetPlayerNameAsync();
+				Debug.Log($"OnSignedIn: ID={Service.PlayerId}, Name={playerName}, Token={Service.AccessToken}");
+			}
+			catch (RequestFailedException ex) { await DefaultExceptionHandling(ex); }
 		}
 
 		private static void OnSignedOut() => Debug.LogWarning($"Player signed out: {Service.PlayerId}");
 
-		private static void OnExpired() => Debug.LogWarning("Player session could not be refreshed and expired.");
+		private static void OnExpired()
+		{
+			Debug.LogWarning("Player session could not be refreshed and expired.");
+
+#pragma warning disable 4014
+			// try to sign back in (not awaited on purpose)
+			SignInCachedUser();
+#pragma warning restore 4014
+		}
 
 		// TODO: ask to sign back in at the next best time (now?)
 		private static void OnSignInFailed(RequestFailedException e) => Debug.LogError($"Sign-in failed: {e}");
+
+		private static async Task DefaultExceptionHandling(Exception ex)
+		{
+			if (ex is AuthenticationException authEx)
+				await NotificationHandler.ShowAll(authEx.Notifications);
+
+			if (PopupExceptions) ExceptionHandler.Handle(ex);
+			if (RethrowExceptions) throw ex;
+		}
 	}
 }
