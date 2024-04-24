@@ -1,7 +1,6 @@
 <engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <engine:VisualElement name="signup-root" style="flex-grow: 1;">
         <engine:GroupBox text="Sign Up">
-            <CodeSmile.GamingServices.GUI.Elements.UsernameTextField />
             <CodeSmile.GamingServices.GUI.Elements.UsernameTextField placeholder-text="Username" style="flex-direction: column;" />
             <engine:TextField placeholder-text="********" password="true" hide-placeholder-on-focus="true" max-length="30" tooltip="Password is case sensitive, must be between 8 to 30 characters long, have at least 1 lowercase letter, 1 uppercase letter, 1 number, and 1 symbol.">
                 <engine:Button text="*" tooltip="Show or mask password characters." style="flex-shrink: 1; max-width: 40px;" />
