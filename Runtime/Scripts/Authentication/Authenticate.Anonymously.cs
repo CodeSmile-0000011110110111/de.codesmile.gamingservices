@@ -22,10 +22,14 @@ namespace CodeSmile.GamingServices.Authentication
 			try
 			{
 				await Services.Initialize();
-				await Service.SignInAnonymouslyAsync();
 
-				if (showNotifications)
-					await NotificationHandler.ShowDsa();
+				if (Service.IsSignedIn == false)
+				{
+					await Service.SignInAnonymouslyAsync();
+
+					if (showNotifications)
+						await NotificationHandler.ShowDsa();
+				}
 			}
 			catch (AuthenticationException ex) when (ex.ErrorCode == AuthenticationErrorCodes.InvalidSessionToken)
 			{

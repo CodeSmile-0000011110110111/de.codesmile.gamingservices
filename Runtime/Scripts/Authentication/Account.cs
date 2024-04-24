@@ -17,28 +17,8 @@ namespace CodeSmile.GamingServices.Authentication
 		public static event Action OnBeforeDeleteAccount;
 		public const Int32 MinPlayerNameLength = 1;
 		public const Int32 MaxPlayerNameLength = 50;
-		public const Int32 MinUserNameLength = 3;
-		public const Int32 MaxUserNameLength = 20;
 		public const Int32 MinPasswordLength = 8;
 		public const Int32 MaxPasswordLength = 30;
-
-		/// <summary>
-		///     Regex character class with valid user name letters, digits and symbols.
-		/// </summary>
-		/// <remarks>
-		///     "Letters" are lower ASCII (65-122) letters only. Extended ASCII or Unicode letters (ÖÔØ etc) are not allowed.
-		/// </remarks>
-		public static readonly String UserNameCharacterClass = @"a-zA-Z0-9\-_.@";
-
-		/// <summary>
-		///     Regex pattern that matches a valid user name.
-		/// </summary>
-		public static readonly String UserNamePattern = $"^[{UserNameCharacterClass}]+$";
-
-		/// <summary>
-		///     Regex pattern that matches any invalid character in a user name.
-		/// </summary>
-		public static readonly String NotUserNamePattern = $"[^{UserNameCharacterClass}]";
 
 		/// <summary>
 		///     Regex pattern that matches a valid password string.
@@ -69,44 +49,6 @@ namespace CodeSmile.GamingServices.Authentication
 				return false;
 
 			return Regex.Match(password, PasswordPattern).Success;
-		}
-
-		/// <summary>
-		///     Returns true if the userName is valid.
-		/// </summary>
-		/// <remarks>
-		///     User name is valid if non-null, does not contain whitespace, is between 3 and 20 characters,
-		///     contains only english letters, numbers, or '-', '_', '.', '@' (hyphen, underscore, dot, at sign).
-		///     Details: https://docs.unity.com/ugs/en-us/manual/authentication/manual/platform-signin-username-password
-		/// </remarks>
-		/// <param name="userName"></param>
-		/// <returns></returns>
-		public static Boolean IsValidUserName(String userName)
-		{
-			if (String.IsNullOrWhiteSpace(userName) || userName.Any(Char.IsWhiteSpace))
-				return false;
-
-			if (userName.Length < MinUserNameLength || userName.Length > MaxUserNameLength)
-				return false;
-
-			return userName.Equals(SanitizeUserName(userName));
-		}
-
-		/// <summary>
-		///     Replaces all invalid username characters with underscores, then returns the first 20 characters.
-		///     CAUTION: The returned string is not necessarily a valid username! For example it could be too short.
-		/// </summary>
-		/// <param name="userName"></param>
-		/// <returns></returns>
-		public static String SanitizeUserName(String userName)
-		{
-			if (String.IsNullOrWhiteSpace(userName))
-				return String.Empty;
-
-			var name = userName.RemoveWhitespace();
-			name = name.Length > MaxUserNameLength ? name.Substring(0, MaxUserNameLength) : name;
-
-			return Regex.Replace(name, NotUserNamePattern, "_");
 		}
 
 		/// <summary>

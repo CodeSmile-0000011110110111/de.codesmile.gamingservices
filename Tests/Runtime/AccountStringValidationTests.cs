@@ -23,36 +23,6 @@ namespace CodeSmile.Tests
 		[TestCase("abcdABCD")] // missing symbol
 		public void IsValidPassword_Invalid_ReturnsFalse(String password) => Assert.IsFalse(Account.IsValidPassword(password));
 
-		[TestCase("123")] // min length
-		[TestCase("abc")] // min length
-		[TestCase("abcdef_-.@1234567890")] // max length
-		[TestCase("abcd_efgh-ijkl.mnop@")] // max length
-		public void SanitizeUserName_ValidName_MatchesInput(String userName)
-		{
-			var sanitizedName = Account.SanitizeUserName(userName);
-
-			Assert.IsTrue(Account.IsValidUserName(userName));
-			Assert.AreEqual(userName, sanitizedName);
-		}
-
-		[TestCase(null, "")]
-		[TestCase("", "")]
-		[TestCase("  ", "")]
-		[TestCase(" 1 2 3 ", "123")]
-		[TestCase("!()$%+#?", "________")]
-		[TestCase("-My= Na`me.", "-My_Na_me.")]
-		[TestCase("12", "12")] // too short
-		[TestCase("                         ", "")] // too long
-		[TestCase("00                      0", "000")] // too long
-		[TestCase("01234567890123456789.123", "01234567890123456789")] // too long
-		[TestCase(" 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ", "01234567890123456789")] // too long
-		public void SanitizeUserName_InvalidName_RemovesInvalidCharacters(String userName, String expected)
-		{
-			var sanitizedName = Account.SanitizeUserName(userName);
-
-			Assert.IsFalse(Account.IsValidUserName(userName));
-			Assert.AreEqual(expected, sanitizedName);
-		}
 
 		[TestCase("a")] // min length
 		[TestCase("0")] // min length
