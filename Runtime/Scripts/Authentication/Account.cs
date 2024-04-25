@@ -17,39 +17,8 @@ namespace CodeSmile.GamingServices.Authentication
 		public static event Action OnBeforeDeleteAccount;
 		public const Int32 MinPlayerNameLength = 1;
 		public const Int32 MaxPlayerNameLength = 50;
-		public const Int32 MinPasswordLength = 8;
-		public const Int32 MaxPasswordLength = 30;
-
-		/// <summary>
-		///     Regex pattern that matches a valid password string.
-		/// </summary>
-		/// <remarks>
-		///     Not all symbols have been tested to be allowed. Waiting for confirmation.
-		/// </remarks>
-		public static readonly String PasswordPattern =
-			@"(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!""#$%&'´`()*+-.,/\\:;<=>?@^_{|}~\[\]])";
 
 		private static IAuthenticationService AuthService => AuthenticationService.Instance;
-
-		/// <summary>
-		///     Returns true if the password is valid.
-		/// </summary>
-		/// <remarks>
-		///     Password must be non-null, requires a minimum of 8 and a maximum of 30 characters and
-		///     at least 1 lowercase letter, 1 uppercase letter, 1 number, and 1 symbol.
-		/// </remarks>
-		/// <param name="password"></param>
-		/// <returns></returns>
-		public static Boolean IsValidPassword(String password)
-		{
-			if (password == null)
-				return false;
-
-			if (password.Length < MinPasswordLength || password.Length > MaxPasswordLength)
-				return false;
-
-			return Regex.Match(password, PasswordPattern).Success;
-		}
 
 		/// <summary>
 		///     Returns true if the playerName is valid.

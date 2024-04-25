@@ -1,11 +1,8 @@
 <engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <engine:VisualElement name="signup-root" style="flex-grow: 1;">
         <engine:GroupBox text="Sign Up">
-            <CodeSmile.GamingServices.GUI.Elements.UsernameTextField placeholder-text="Username" style="flex-direction: column;" />
-            <engine:TextField placeholder-text="********" password="true" hide-placeholder-on-focus="true" max-length="30" tooltip="Password is case sensitive, must be between 8 to 30 characters long, have at least 1 lowercase letter, 1 uppercase letter, 1 number, and 1 symbol.">
-                <engine:Button text="*" tooltip="Show or mask password characters." style="flex-shrink: 1; max-width: 40px;" />
-            </engine:TextField>
-            <engine:Label text="shown if password is invalid" style="color: rgb(125, 0, 0); margin-top: 2px; margin-left: 4px;" />
+            <CodeSmile.GamingServices.GUI.Elements.UsernameTextField placeholder-text="Username" sanitize-input="true" />
+            <CodeSmile.GamingServices.GUI.Elements.PasswordTextField masked-icon="project://database/Packages/de.codesmile.gamingservices/3rdParty/Kenney/cursor-pack/look_b.png?fileID=2800000&amp;guid=cb58d8c739787e249badcb6a19caad22&amp;type=3#look_b" unmasked-icon="project://database/Packages/de.codesmile.gamingservices/3rdParty/Kenney/cursor-pack/look_c.png?fileID=2800000&amp;guid=d4f92ad9a3b0f444c8f3d703fd4d72ff&amp;type=3#look_c" mask-button-size="36,36" placeholder-text="enter password" mask-icon-size="36,36" icon-size="36,36" />
             <engine:Button text="Sign up" />
         </engine:GroupBox>
         <engine:Label text="--- or ---" style="align-self: center;" />

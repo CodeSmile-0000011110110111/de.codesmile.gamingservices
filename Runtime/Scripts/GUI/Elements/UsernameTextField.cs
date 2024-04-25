@@ -4,6 +4,7 @@
 using CodeSmile.GamingServices.Authentication;
 using System;
 using System.Text.RegularExpressions;
+using Unity.Services.Authentication;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -11,7 +12,8 @@ using UnityEngine.UIElements;
 namespace CodeSmile.GamingServices.GUI.Elements
 {
 	/// <summary>
-	/// Username text field that either only allows valid input or displays text if the input is invalid.
+	///     Username text field that either allows only valid input (replacing invalid chars on the fly) or
+	///     displays a label if the input is invalid, indicating what's wrong (too short/long, invalid symbol).
 	/// </summary>
 	[UxmlElement]
 	public partial class UsernameTextField : TextField
@@ -19,21 +21,28 @@ namespace CodeSmile.GamingServices.GUI.Elements
 		private readonly Label m_ErrorLabel = new();
 		private Username m_Username = new();
 
+		[Header("Input Handling")]
 		/// <summary>
-		/// The Username instance synchronized with the text field.
+		///     If true, typing invalid characters replaces them with a valid symbol. Otherwise, invalid input is allowed
+		///		and while Username is invalid, an error label is shown.
 		/// </summary>
-		public Username Username { get => m_Username; set => m_Username = value ?? new Username(); }
+		[Tooltip("If checked, typing invalid characters replaces them with a valid symbol. If unchecked, " +
+		         "invalid input is allowed and while Username is invalid, an error label is shown.")]
+		[UxmlAttribute] private Boolean SanitizeInput { get; set; } = true;
+		[Header("Error Label")]
+		[UxmlAttribute] private Color ErrorLabelColor { get; set; } = new(.5f, 0f, 0f);
 
 		/// <summary>
-		///     If set, the text field replaces all invalid input characters with a valid symbol.
+		///     The Username instance synchronized with the text field.
 		/// </summary>
-		[UxmlAttribute]
-		public Boolean SanitizeInput { get; set; } = true;
+		public Username Username { get => m_Username; set => m_Username = value ?? new Username(); }
 
 		public UsernameTextField()
 		{
 			style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Column);
+			maxLength = Username.LengthMax;
 
+			m_ErrorLabel.style.color = ErrorLabelColor;
 			Add(m_ErrorLabel);
 
 			RegisterCallback<AttachToPanelEvent>(e => RegisterCallback<InputEvent>(OnUserInput));
