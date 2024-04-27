@@ -13,7 +13,7 @@ namespace CodeSmile.GamingServices.Authentication
 {
 	public static partial class Account
 	{
-		public static event Action OnBeforeDeleteAccount;
+		public static event Func<Task<Boolean>> OnBeforeDelete;
 
 		public const Int32 MinPlayerNameLength = 1;
 		public const Int32 MaxPlayerNameLength = 50;
@@ -111,12 +111,12 @@ namespace CodeSmile.GamingServices.Authentication
 		/// </summary>
 		/// <remarks>
 		///     CAUTION: does not delete player data in other services.
-		///     Subscribe to the OnBeforeDeleteAccount event to perform data deletion.
+		///     Subscribe to the OnBeforeDelete event to perform data deletion beforehand.
 		/// </remarks>
+		/// <returns>True if deletion occured, false if it was denied.</returns>
 		public static async void DeleteAsync()
 		{
-			OnBeforeDeleteAccount?.Invoke();
-
+			await OnBeforeDelete?.Invoke();
 			await AuthService.DeleteAccountAsync();
 		}
 	}

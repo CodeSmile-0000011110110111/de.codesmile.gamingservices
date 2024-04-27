@@ -2,11 +2,10 @@
 // Refer to included LICENSE file for terms and conditions.
 
 using CodeSmile.Components;
-using CodeSmile.GamingServices.Authentication;
 using UnityEditor;
 using UnityEngine;
 
-namespace CodeSmile.GamingServices
+namespace CodeSmile.GamingServices.Authentication
 {
 	public class SignInAnonymously : OneTimeTaskBehaviour
 	{
