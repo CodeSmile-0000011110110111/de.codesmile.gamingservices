@@ -54,12 +54,12 @@ namespace CodeSmile.GamingServices.GUI.Elements
 
 		protected virtual void OnUserInput(InputEvent evt)
 		{
-			m_Username.Name = text;
+			m_Username.Value = text;
 
 			if (SanitizeInput)
 			{
-				m_Username.Name = m_Username.SanitizedName;
-				SetValueWithoutNotify(m_Username.Name);
+				m_Username.Value = m_Username.SanitizedName;
+				SetValueWithoutNotify(m_Username.Value);
 			}
 			else
 				UpdateErrorLabel(m_Username);

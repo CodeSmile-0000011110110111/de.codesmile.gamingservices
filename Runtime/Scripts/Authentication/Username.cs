@@ -41,13 +41,13 @@ namespace CodeSmile.GamingServices.Authentication
 		/// <summary>
 		///     The username string. It may or may not be a valid username.
 		/// </summary>
-		public String Name { get; set; } = String.Empty;
+		public String Value { get; set; } = String.Empty;
 
 		/// <summary>
 		///     The sanitized username string with invalid characters replaced and shortened to max length.
 		/// </summary>
 		/// <remarks>CAUTION: The returned string can still be an invalid username, eg it could be too short.</remarks>
-		public String SanitizedName => Sanitize(Name, ValidSymbols, LengthMax);
+		public String SanitizedName => Sanitize(Value, ValidSymbols, LengthMax);
 
 		/// <summary>
 		///     Returns true if the username is valid, false otherwise.
@@ -57,24 +57,24 @@ namespace CodeSmile.GamingServices.Authentication
 		/// <summary>
 		///     Encodes whether and what part of the string failed to validate.
 		/// </summary>
-		public ValidationState State => Validate(Name, ValidSymbols, LengthMin, LengthMax);
+		public ValidationState State => Validate(Value, ValidSymbols, LengthMin, LengthMax);
 
 		/// <summary>
 		///     The minimum length for a username. Default: 3
 		/// </summary>
-		public Int32 LengthMin { get; }
+		public Int32 LengthMin { get; } = UgsUsernameLengthMin;
 
 		/// <summary>
 		///     The maximum length for a username. Default: 20
 		/// </summary>
-		public Int32 LengthMax { get; }
+		public Int32 LengthMax { get; } = UgsUsernameLengthMax;
 
 		/// <summary>
 		///     Regex character class matching valid username symbols.
 		/// </summary>
-		public String ValidSymbols { get; }
+		public String ValidSymbols { get; } = UgsUsernameValidSymbols;
 
-		public static implicit operator String(Username username) => username.Name;
+		public static implicit operator String(Username username) => username.Value;
 		public static implicit operator Username(String username) => new(username);
 
 		/// <summary>
@@ -138,7 +138,7 @@ namespace CodeSmile.GamingServices.Authentication
 		///     Creates a new Username with an empty string and default settings.
 		/// </summary>
 		public Username()
-			: this(String.Empty) {}
+			: this(null) {}
 
 		/// <summary>
 		///     Creates a new Username with the given input string and validation requirements.
@@ -150,7 +150,7 @@ namespace CodeSmile.GamingServices.Authentication
 		public Username(String username, String validSymbols = UgsUsernameValidSymbols, Int32 lengthMin = UgsUsernameLengthMin,
 			Int32 lengthMax = UgsUsernameLengthMax)
 		{
-			Name = username;
+			Value = username ?? string.Empty;
 			ValidSymbols = validSymbols;
 			LengthMin = lengthMin;
 			LengthMax = lengthMax;

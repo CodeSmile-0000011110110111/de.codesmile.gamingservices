@@ -11,8 +11,8 @@ namespace CodeSmile.Tests
 {
 	public class PasswordTests
 	{
-		[TestCase("Aa 00000")] // min length
-		[TestCase("Aa 000000000000000000000000000")] // max length
+		[TestCase("Aa_00000")] // min length
+		[TestCase("Aa.000000000000000000000000000")] // max length
 		public void IsValidPassword_Valid_ReturnsTrue(String password) => Assert.IsTrue(Password.IsValidPassword(password));
 
 		[TestCase("123Abc!")] // too short
