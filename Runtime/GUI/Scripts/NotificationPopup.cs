@@ -1,8 +1,8 @@
 // Copyright (C) 2021-2024 Steffen Itterheim
 // Refer to included LICENSE file for terms and conditions.
 
+using CodeSmile.Components;
 using CodeSmile.GamingServices.Authentication;
-using CodeSmile.MultiPal.GUI.Base;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
