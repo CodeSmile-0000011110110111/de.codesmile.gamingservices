@@ -53,7 +53,7 @@ namespace CodeSmile.GamingServices.Authentication
 						throw new ArgumentOutOfRangeException(nameof(operation), operation, null);
 				}
 
-				await NotificationHandler.ShowDsa();
+				await Account.TryShowNewNotifications();
 			}
 			catch (RequestFailedException ex) { await DefaultExceptionHandling(ex); }
 		}

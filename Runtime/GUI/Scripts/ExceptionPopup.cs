@@ -4,12 +4,10 @@
 using CodeSmile.MultiPal.GUI.Base;
 using System;
 using System.Threading.Tasks;
-using Unity.Services.Core;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 #if UNITY_EDITOR
-using Unity.Services.Authentication;
 #endif
 
 namespace CodeSmile.GamingServices
@@ -17,49 +15,40 @@ namespace CodeSmile.GamingServices
 	[RequireComponent(typeof(UIDocument))]
 	public class ExceptionPopup : GuiBehaviour
 	{
+		private const String PopupGroupName = "PopupGroup";
 		private const String NotificationName = "Notification";
 		private const String CopyButtonName = "CopyButton";
 		private const String CloseButtonName = "CloseButton";
-		private const String PopupGroupName = "PopupGroup";
 
-		private static ExceptionPopup s_Instance;
 		private static TaskCompletionSource<Boolean> s_ShowModalPopup;
 
 		private Exception m_Exception;
-		private String m_ErrorMessage;
+		private String m_Reason;
+		private Int32 m_ErrorCode;
 
-		public static async Task<Boolean> ShowModal(Exception exception, String errorMessage)
-		{
-			if (s_Instance == null)
-			{
-				Debug.LogWarning($"No instance of {nameof(ExceptionPopup)} in scene");
-				return false;
-			}
-
-			return await s_Instance.Show(exception, errorMessage);
-		}
-
-		private void Awake()
-		{
-			if (s_Instance != null)
-				throw new InvalidOperationException($"Only one instance of {nameof(ExceptionPopup)} allowed");
-
-			s_Instance = this;
-		}
+		private void Awake() => Services.OnServiceRequestFailed += OnServiceRequestFailed;
 
 		protected override void OnDestroy()
 		{
 			base.OnDestroy();
 			Hide();
+			Services.OnServiceRequestFailed -= OnServiceRequestFailed;
 		}
 
-		private async Task<Boolean> Show(Exception exception, String errorMessage)
+		private async Task OnServiceRequestFailed(Exception ex, String reason, Int32 errorCode) =>
+			await Show(ex, reason, errorCode);
+
+		public async Task<Boolean> Show(Exception exception, String reason, Int32 errorCode = -1)
 		{
 			if (s_ShowModalPopup != null)
-				throw new InvalidOperationException("popup already showing");
+			{
+				Debug.LogWarning("popup already showing");
+				return false;
+			}
 
 			m_Exception = exception;
-			m_ErrorMessage = errorMessage;
+			m_Reason = reason;
+			m_ErrorCode = errorCode;
 
 			gameObject.SetActive(true);
 
@@ -80,16 +69,7 @@ namespace CodeSmile.GamingServices
 			FindFirst<TextField>(NotificationName).value = GetExceptionMessage();
 		}
 
-		private String GetExceptionTitle()
-		{
-			string title;
-			if (m_Exception is RequestFailedException requestFailed)
-				title = $"Error {requestFailed.ErrorCode}";
-			else
-				title = m_Exception?.GetType().Name;
-
-			return $"{title}: {m_ErrorMessage}";
-		}
+		private String GetExceptionTitle() => $"{m_Reason} ({(m_ErrorCode >= 0 ? m_ErrorCode : m_Exception.GetType().Name)})";
 
 		private String GetExceptionMessage() => m_Exception?.Message;
 
@@ -119,7 +99,7 @@ namespace CodeSmile.GamingServices
 		private void OnClose()
 		{
 			m_Exception = default;
-			m_ErrorMessage = default;
+			m_Reason = default;
 			Hide();
 		}
 
@@ -155,8 +135,8 @@ namespace CodeSmile.GamingServices
 				}
 
 				var msg = $"TEST {nameof(ExceptionPopup)}";
-				var ex = AuthenticationException.Create(10000, msg);
-				EditorApplication.delayCall += async () => m_ShowPopup = await ShowModal(ex, msg);
+				var ex = new Exception(msg);
+				EditorApplication.delayCall += async () => m_ShowPopup = await Show(ex, msg, 98765);
 			}
 		}
 #endif

@@ -28,7 +28,7 @@ namespace CodeSmile.GamingServices.Authentication
 					await Service.SignInAnonymouslyAsync();
 
 					if (showNotifications)
-						await NotificationHandler.ShowDsa();
+						await Account.TryShowNewNotifications();
 				}
 			}
 			catch (AuthenticationException ex) when (ex.ErrorCode == AuthenticationErrorCodes.InvalidSessionToken)

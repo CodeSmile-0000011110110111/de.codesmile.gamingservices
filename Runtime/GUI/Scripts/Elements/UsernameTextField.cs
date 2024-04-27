@@ -4,7 +4,6 @@
 using CodeSmile.GamingServices.Authentication;
 using System;
 using System.Text.RegularExpressions;
-using Unity.Services.Authentication;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -40,7 +39,7 @@ namespace CodeSmile.GamingServices.GUI.Elements
 		public UsernameTextField()
 		{
 			style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Column);
-			maxLength = Username.LengthMax;
+			maxLength = Username.Requires.MaxLength;
 
 			m_ErrorLabel.style.color = ErrorLabelColor;
 			Add(m_ErrorLabel);
@@ -48,7 +47,7 @@ namespace CodeSmile.GamingServices.GUI.Elements
 			RegisterCallback<AttachToPanelEvent>(e => RegisterCallback<InputEvent>(OnUserInput));
 			RegisterCallback<DetachFromPanelEvent>(e => UnregisterCallback<InputEvent>(OnUserInput));
 			RegisterCallback<TooltipEvent>(evt => UpdateTooltip(m_Username));
-			RegisterCallback<FocusInEvent>(evt => ShowErrorLabel(!m_Username.IsValid));
+			RegisterCallback<FocusInEvent>(evt => UpdateErrorLabel(m_Username));
 			RegisterCallback<FocusOutEvent>(evt => ShowErrorLabel(false));
 		}
 
@@ -58,7 +57,7 @@ namespace CodeSmile.GamingServices.GUI.Elements
 
 			if (SanitizeInput)
 			{
-				m_Username.Value = m_Username.SanitizedName;
+				m_Username.Value = m_Username.GetSanitized();
 				SetValueWithoutNotify(m_Username.Value);
 			}
 			else
@@ -67,15 +66,18 @@ namespace CodeSmile.GamingServices.GUI.Elements
 
 		protected virtual void UpdateTooltip(Username username)
 		{
-			var validSymbols = Regex.Unescape(username.ValidSymbols);
-			tooltip = $"Username is case insensitive; between {username.LengthMin} to {username.LengthMax} characters; " +
-			          $"english alphabet letters, digits, and the symbols {validSymbols} are valid.";
+			var requires = username.Requires;
+			var validSymbols = Regex.Unescape(requires.ValidSymbols);
+			tooltip = $"Username is case insensitive; between {requires.MinLength} to {requires.MaxLength} characters; " +
+			          $"valid characters are english alphabet letters, digits, and the symbols {validSymbols}";
 		}
 
 		protected virtual void UpdateErrorLabel(Username username)
 		{
-			ShowErrorLabel(SanitizeInput == false && !username.IsValid);
-			m_ErrorLabel.text = username.IsValid ? String.Empty : username.State.ToString();
+			var validationState = username.Validate();
+			var isValid = validationState == Username.ValidationState.Valid;
+			m_ErrorLabel.text = isValid ? String.Empty : validationState.ToString();
+			ShowErrorLabel(!SanitizeInput && !isValid);
 		}
 
 		protected void ShowErrorLabel(Boolean show)

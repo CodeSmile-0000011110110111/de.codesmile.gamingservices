@@ -1,0 +1,17 @@
+{
+    "name": "CodeSmile.GamingServices.GUI",
+    "rootNamespace": "",
+    "references": [
+        "GUID:e24f30608cf04354be70b7062aa0ad2b",
+        "GUID:b3958fd6d65dd584197ed4c6102f58e1"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

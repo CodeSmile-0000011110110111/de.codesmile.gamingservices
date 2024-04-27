@@ -3,7 +3,6 @@
 
 using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
@@ -12,9 +11,10 @@ using UnityEngine;
 
 namespace CodeSmile.GamingServices.Authentication
 {
-	public static class Account
+	public static partial class Account
 	{
 		public static event Action OnBeforeDeleteAccount;
+
 		public const Int32 MinPlayerNameLength = 1;
 		public const Int32 MaxPlayerNameLength = 50;
 
@@ -62,7 +62,7 @@ namespace CodeSmile.GamingServices.Authentication
 		public static async Task<String> GetPlayerNameAsync()
 		{
 			var name = AuthService.PlayerName;
-			if (string.IsNullOrEmpty(name))
+			if (String.IsNullOrEmpty(name))
 			{
 				try
 				{
@@ -70,7 +70,7 @@ namespace CodeSmile.GamingServices.Authentication
 				}
 				catch (RequestFailedException ex)
 				{
-					ExceptionHandler.Handle(ex);
+					Services.HandleServiceException(ex);
 				}
 			}
 
@@ -88,7 +88,7 @@ namespace CodeSmile.GamingServices.Authentication
 				}
 				catch (RequestFailedException ex)
 				{
-					ExceptionHandler.Handle(ex);
+					Services.HandleServiceException(ex);
 				}
 			}
 

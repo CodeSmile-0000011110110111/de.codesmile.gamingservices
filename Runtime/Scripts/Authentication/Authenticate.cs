@@ -4,6 +4,7 @@
 using System;
 using System.Threading.Tasks;
 using Unity.Services.Authentication;
+using Unity.Services.Authentication.PlayerAccounts;
 using Unity.Services.Core;
 using UnityEditor;
 using UnityEngine;
@@ -46,6 +47,14 @@ namespace CodeSmile.GamingServices.Authentication
 
 			service.Expired += OnExpired;
 			service.Expired -= OnExpired;
+
+			PlayerAccountService.Instance.SignedIn += OnSignInWithUnity;
+		}
+
+		private static void OnSignInWithUnity()
+		{
+			Debug.Log("OnSignInWithUnity");
+			OnSignedIn();
 		}
 
 		private static async void OnSignedIn()
@@ -73,12 +82,12 @@ namespace CodeSmile.GamingServices.Authentication
 		// TODO: ask to sign back in at the next best time (now?)
 		private static void OnSignInFailed(RequestFailedException e) => Debug.LogError($"Sign-in failed: {e}");
 
-		private static async Task DefaultExceptionHandling(Exception ex)
+		private static async Task DefaultExceptionHandling(RequestFailedException ex)
 		{
 			if (ex is AuthenticationException authEx)
-				await NotificationHandler.ShowAll(authEx.Notifications);
+				await Account.ShowAllNotifications(authEx.Notifications);
 
-			if (PopupExceptions) ExceptionHandler.Handle(ex);
+			if (PopupExceptions) Services.HandleServiceException(ex);
 			if (RethrowExceptions) throw ex;
 		}
 	}

@@ -12,8 +12,8 @@ namespace CodeSmile.GamingServices.Authentication
 	///     Handles validation of a Username string.
 	/// </summary>
 	/// <remarks>
-	///     Assumes letters and digits are always allowed. Valid symbols can be specified and default to UGS' default
-	///     valid symbols for a Username.
+	///     Upper and lowercase letters (english alphabet) and digits are always allowed. Valid symbols can be specified if
+	///     they deviate from the default valid symbols for a UGS Username.
 	/// </remarks>
 	/// <remarks>
 	///     A UGS Username is valid if the string does not contain whitespace, is between 3 and 20 characters,
@@ -28,132 +28,149 @@ namespace CodeSmile.GamingServices.Authentication
 		[Flags]
 		public enum ValidationState
 		{
+			/// <summary>
+			///     Value is valid given current settings.
+			/// </summary>
 			Valid = 0,
+			/// <summary>
+			///     Value does not satisfy minimum length requirement.
+			/// </summary>
 			TooShort = 1 << 0,
+			/// <summary>
+			///     Value does not satisfy maximum length requirement.
+			/// </summary>
 			TooLong = 1 << 1,
+			/// <summary>
+			///     Value contains one or more invalid symbols.
+			/// </summary>
 			InvalidSymbol = 1 << 2,
 		}
 
-		public const Int32 UgsUsernameLengthMin = 3;
-		public const Int32 UgsUsernameLengthMax = 20;
-		public const String UgsUsernameValidSymbols = @"_\-.@";
+		private const Int32 DefaultMinLength = 3;
+		private const Int32 DefaultMaxLength = 20;
+		private const String DefaultValidSymbols = @"_\-.@";
+
+		private readonly String m_InvalidPattern;
+		private readonly String m_ReplacementChar;
 
 		/// <summary>
 		///     The username string. It may or may not be a valid username.
 		/// </summary>
-		public String Value { get; set; } = String.Empty;
+		/// <remarks>
+		///     Any string can be assigned, including empty or null. To test if the current value is a valid username,
+		///     check the IsValid and State properties.
+		/// </remarks>
+		public String Value { get; set; }
 
 		/// <summary>
-		///     The sanitized username string with invalid characters replaced and shortened to max length.
+		///     The Username string requirements that have to be satisfied.
 		/// </summary>
-		/// <remarks>CAUTION: The returned string can still be an invalid username, eg it could be too short.</remarks>
-		public String SanitizedName => Sanitize(Value, ValidSymbols, LengthMax);
-
-		/// <summary>
-		///     Returns true if the username is valid, false otherwise.
-		/// </summary>
-		public Boolean IsValid => State == ValidationState.Valid;
-
-		/// <summary>
-		///     Encodes whether and what part of the string failed to validate.
-		/// </summary>
-		public ValidationState State => Validate(Value, ValidSymbols, LengthMin, LengthMax);
-
-		/// <summary>
-		///     The minimum length for a username. Default: 3
-		/// </summary>
-		public Int32 LengthMin { get; } = UgsUsernameLengthMin;
-
-		/// <summary>
-		///     The maximum length for a username. Default: 20
-		/// </summary>
-		public Int32 LengthMax { get; } = UgsUsernameLengthMax;
-
-		/// <summary>
-		///     Regex character class matching valid username symbols.
-		/// </summary>
-		public String ValidSymbols { get; } = UgsUsernameValidSymbols;
+		public Requirements Requires { get; }
 
 		public static implicit operator String(Username username) => username.Value;
 		public static implicit operator Username(String username) => new(username);
 
-		/// <summary>
-		///     Returns whether the userName is valid and if not, what failed to validate.
-		/// </summary>
-		/// <remarks>
-		///     User name is valid if non-null, does not contain whitespace, is between 3 and 20 characters,
-		///     contains only english letters, numbers, or '-', '_', '.', '@' (hyphen, underscore, dot, at sign).
-		///     Details: https://docs.unity.com/ugs/en-us/manual/authentication/manual/platform-signin-username-password
-		/// </remarks>
-		/// <param name="username">The username string to test for validity.</param>
-		/// <param name="validSymbols">A Regex pattern matching only valid symbols.</param>
-		/// <param name="lengthMin">Minimum username length.</param>
-		/// <param name="lengthMax">Maximum username length.</param>
-		/// <returns>ValidationState.Valid if the username is valid, otherwise flags encode what's wrong. </returns>
-		public static ValidationState Validate(String username, String validSymbols = UgsUsernameValidSymbols,
-			Int32 lengthMin = UgsUsernameLengthMin, Int32 lengthMax = UgsUsernameLengthMax)
+		private static ValidationState Validate(String username, Int32 lengthMin, Int32 lengthMax, String invalidPattern)
 		{
 			if (username == null)
 				return ValidationState.TooShort;
 
-			var result = ValidationState.Valid;
+			var state = ValidationState.Valid;
+
 			if (username.Length < lengthMin)
-				result |= ValidationState.TooShort;
+				state |= ValidationState.TooShort;
 
 			if (username.Length > lengthMax)
-				result |= ValidationState.TooLong;
+				state |= ValidationState.TooLong;
 
-			if (Regex.Match(username, GetInvalidPattern(validSymbols)).Success)
-				result |= ValidationState.InvalidSymbol;
+			if (Regex.Match(username, invalidPattern).Success)
+				state |= ValidationState.InvalidSymbol;
 
-			return result;
+			return state;
 		}
 
-		/// <summary>
-		///     Replaces all invalid username characters with the first symbol in the validSymbols list.
-		/// </summary>
-		/// <remarks>
-		///     CAUTION: The returned string is not necessarily a valid username! For example, if the string is too short
-		///     or null it will not be padded to match the min length.
-		/// </remarks>
-		/// <param name="username">The username string to sanitize.</param>
-		/// <param name="validSymbols">A Regex pattern matching only valid symbols.</param>
-		/// <param name="lengthMax">Maximum username length.</param>
-		/// <returns>Returns the modified string capped to lengthMax characters.</returns>
-		public static String Sanitize(String username, String validSymbols = UgsUsernameValidSymbols,
-			Int32 lengthMax = UgsUsernameLengthMax)
+		private static String Sanitize(String username, String invalidPattern, String replacementChar, Int32 lengthMax)
 		{
 			if (username == null)
 				return String.Empty;
 
-			if (String.IsNullOrEmpty(validSymbols) == false)
-				username = Regex.Replace(username, GetInvalidPattern(validSymbols), validSymbols.Substring(0, 1));
+			// invalid symbols are replaced with the first valid symbol
+			if (String.IsNullOrEmpty(invalidPattern) == false)
+				username = Regex.Replace(username, invalidPattern, replacementChar);
 
 			return username.Length > lengthMax ? username.Substring(0, lengthMax) : username;
 		}
-
-		private static String GetInvalidPattern(String validSymbols = UgsUsernameValidSymbols) => $"[^a-zA-Z0-9{validSymbols}]";
 
 		/// <summary>
 		///     Creates a new Username with an empty string and default settings.
 		/// </summary>
 		public Username()
-			: this(null) {}
+			: this(String.Empty) {}
 
 		/// <summary>
-		///     Creates a new Username with the given input string and validation requirements.
+		///     Creates a new Username with a string and validation requirements.
 		/// </summary>
+		/// <remarks>
+		///     A Username always allows upper- and lowercase letters (english alphabet) and digits.
+		///     You only specify valid symbols as a regex character class, properly escaped.
+		/// </remarks>
 		/// <param name="username">The username string.</param>
-		/// <param name="validSymbols">Regex compatible list of valid symbols.</param>
-		/// <param name="lengthMin"></param>
-		/// <param name="lengthMax"></param>
-		public Username(String username, String validSymbols = UgsUsernameValidSymbols, Int32 lengthMin = UgsUsernameLengthMin,
-			Int32 lengthMax = UgsUsernameLengthMax)
+		/// <param name="minLength">Min length of username. Default: 3</param>
+		/// <param name="maxLength">Max length of username. Default: 20</param>
+		/// <param name="validSymbols">
+		///     Regex compatible list of valid symbols, properly escaped where necessary. Imagine this
+		///     string is emplaced within [ ] to form a regex character class. Thus do not enclose the string in [].
+		///     Default is: @"_\-.@"
+		/// </param>
+		public Username(String username, Requirements requirements = null)
 		{
-			Value = username ?? string.Empty;
-			ValidSymbols = validSymbols;
-			LengthMin = lengthMin;
-			LengthMax = lengthMax;
+			Value = username ?? String.Empty;
+			Requires = requirements ?? new Requirements();
+			m_InvalidPattern = $"[^a-zA-Z0-9{Requires.ValidSymbols}]"; // [^...] negates the character class
+			m_ReplacementChar = Requires.ValidSymbols.Length > 0 ? Requires.ValidSymbols.Substring(0, 1) : "0";
+		}
+
+		/// <summary>
+		///     The sanitized username string with invalid characters replaced and shortened to max length.
+		/// </summary>
+		/// <remarks>CAUTION: The returned string can still be an invalid username, eg it could be too short.</remarks>
+		public String GetSanitized() => Sanitize(Value, m_InvalidPattern, m_ReplacementChar, Requires.MaxLength);
+
+		/// <summary>
+		///     Returns whether Value is a valid username. If not, the ValidationState encodes what's invalid about it.
+		/// </summary>
+		public ValidationState Validate() => Validate(Value, Requires.MinLength, Requires.MaxLength, m_InvalidPattern);
+
+		/// <summary>
+		///     Requirements specification for a Username string.
+		/// </summary>
+		public class Requirements
+		{
+			/// <summary>
+			///     The minimum length for a username. Default: 3
+			/// </summary>
+			public Int32 MinLength { get; }
+			/// <summary>
+			///     The maximum length for a username. Default: 20
+			/// </summary>
+			public Int32 MaxLength { get; }
+			/// <summary>
+			///     Regex escaped characters of valid username symbols.
+			/// </summary>
+			public String ValidSymbols { get; }
+
+			/// <summary>
+			///     Creates a new instance.
+			/// </summary>
+			/// <param name="minLength"></param>
+			/// <param name="maxLength"></param>
+			/// <param name="validSymbols"></param>
+			public Requirements(Int32 minLength = -1, Int32 maxLength = -1, String validSymbols = null)
+			{
+				MinLength = minLength >= 0 ? minLength : DefaultMinLength;
+				MaxLength = maxLength >= 0 ? maxLength : DefaultMaxLength;
+				ValidSymbols = validSymbols ?? DefaultValidSymbols;
+			}
 		}
 	}
 }

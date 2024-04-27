@@ -11,26 +11,28 @@ using UnityEngine;
 
 namespace CodeSmile.GamingServices.Authentication
 {
-	internal static class NotificationHandler
+	public static partial class Account
 	{
-		private const String NotificationDateKey = "CodeSmile.GamingServices.Authentication.NotificationDate";
+		public static event Func<Dictionary<String, String>, Task> OnShowNotification;
+
+		private const String NotificationDateKey = "CodeSmile.GamingServices.Account.NotificationDate";
 		private static Int64 LastNotificationDate
 		{
 			get => Int64.Parse(PlayerPrefs.GetString(NotificationDateKey, "0"), NumberFormatInfo.InvariantInfo);
 			set => PlayerPrefs.SetString(NotificationDateKey, value.ToString(NumberFormatInfo.InvariantInfo));
 		}
 
-		public static async Task ShowDsa()
+		public static async Task TryShowNewNotifications()
 		{
 			var authService = AuthenticationService.Instance;
 			if (Int64.TryParse(authService.LastNotificationDate, out var lastDate) && lastDate > LastNotificationDate)
 			{
 				var notifications = await authService.GetNotificationsAsync();
-				await ShowAll(notifications);
+				await ShowAllNotifications(notifications);
 			}
 		}
 
-		public static async Task ShowAll(List<Notification> notifications)
+		public static async Task ShowAllNotifications(List<Notification> notifications)
 		{
 			if (notifications == null || notifications.Count == 0)
 				return;
@@ -41,7 +43,16 @@ namespace CodeSmile.GamingServices.Authentication
 
 		private static async Task ShowNotification(Notification notification)
 		{
-			await NotificationPopup.ShowModal(notification);
+			var contents = new Dictionary<String, String>
+			{
+				{ "Type", notification.Type },
+				{ "ProjectId", notification.ProjectId },
+				{ "PlayerId", notification.PlayerId },
+				{ "CaseId", notification.CaseId },
+				{ "Message", notification.Message },
+			};
+
+			await OnShowNotification?.Invoke(contents);
 
 			if (Int64.TryParse(notification.CreatedAt, out var createdDate) && createdDate > LastNotificationDate)
 				LastNotificationDate = createdDate;

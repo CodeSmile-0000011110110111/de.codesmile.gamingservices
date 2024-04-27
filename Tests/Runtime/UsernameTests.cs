@@ -15,10 +15,9 @@ namespace CodeSmile.Tests
 		[TestCase("abc")] // min length
 		[TestCase("abcdef_-.@1234567890")] // max length
 		[TestCase("abcd_efgh-ijkl.mnop@")] // max length
-		public void Validate_ValidUsername_Succeeds(String name)
+		public void Validate_ValidUsername_IsValid(String name)
 		{
-			Assert.AreEqual(Username.ValidationState.Valid, Username.Validate(name));
-			Assert.IsTrue(new Username(name).IsValid);
+			Assert.AreEqual(Username.ValidationState.Valid, new Username(name).Validate());
 		}
 
 		[TestCase(null, Username.ValidationState.TooShort)]
@@ -32,10 +31,9 @@ namespace CodeSmile.Tests
 		[TestCase("0000000000000000000000000", Username.ValidationState.TooLong)]
 		[TestCase("01234567890123456789.123", Username.ValidationState.TooLong)]
 		[TestCase(" 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ", Username.ValidationState.InvalidSymbol | Username.ValidationState.TooLong)]
-		public void Validate_InvalidUsername_FailsWithExpectedResult(String name, Username.ValidationState expected)
+		public void Validate_InvalidUsername_MatchesValidationFailState(String name, Username.ValidationState expectedState)
 		{
-			Assert.AreEqual(expected, Username.Validate(name));
-			Assert.IsFalse(new Username(name).IsValid);
+			Assert.AreEqual(expectedState, new Username(name).Validate());
 		}
 
 		[TestCase(null, "")]
@@ -50,9 +48,9 @@ namespace CodeSmile.Tests
 		[TestCase("01234567890123456789.123", "01234567890123456789")] // too long
 		[TestCase(" 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ", "_0_1_2_3_4_5_6_7_8_9")] // too long
 		[TestCase("_Valid.User@Name-123", "_Valid.User@Name-123")]
-		public void SanitizedName_ReplacesInvalidSymbols(String userName, String expected)
+		public void SanitizedName_ReplacesInvalidUsernameSymbols(String name, String expected)
 		{
-			Assert.AreEqual(expected, new Username(userName).SanitizedName);
+			Assert.AreEqual(expected, new Username(name).GetSanitized());
 		}
 	}
 }

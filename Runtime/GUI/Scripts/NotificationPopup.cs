@@ -1,10 +1,11 @@
 // Copyright (C) 2021-2024 Steffen Itterheim
 // Refer to included LICENSE file for terms and conditions.
 
+using CodeSmile.GamingServices.Authentication;
 using CodeSmile.MultiPal.GUI.Base;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Unity.Services.Authentication;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -14,40 +15,25 @@ namespace CodeSmile.GamingServices
 	[RequireComponent(typeof(UIDocument))]
 	public class NotificationPopup : GuiBehaviour
 	{
+		private const String PopupGroupName = "PopupGroup";
 		private const String NotificationName = "Notification";
 		private const String CopyButtonName = "CopyButton";
 		private const String CloseButtonName = "CloseButton";
-		//private const String PopupGroupName = "PopupGroup";
 
-		private static NotificationPopup s_Instance;
 		private static TaskCompletionSource<Boolean> s_ShowModalPopup;
 
-		private Notification m_Notification;
+		private Dictionary<String, String> m_Notification;
 
-		public static async Task<Boolean> ShowModal(Notification notification)
-		{
-			if (s_Instance == null)
-			{
-				Debug.LogWarning($"No instance of {nameof(NotificationPopup)} in scene");
-				return false;
-			}
-
-			return await s_Instance.Show(notification);
-		}
-
-		private void Awake()
-		{
-			if (s_Instance != null)
-				throw new InvalidOperationException($"Only one instance of {nameof(NotificationPopup)} allowed");
-
-			s_Instance = this;
-		}
+		private void Awake() => Account.OnShowNotification += OnShowNotification;
 
 		protected override void OnDestroy()
 		{
 			base.OnDestroy();
 			Hide();
+			Account.OnShowNotification -= OnShowNotification;
 		}
+
+		private async Task OnShowNotification(Dictionary<String, String> notification) => await Show(notification);
 
 		protected override void OnShowGUI()
 		{
@@ -56,15 +42,18 @@ namespace CodeSmile.GamingServices
 			OnRegisterEvents();
 		}
 
-		private void UpdateContent() => FindFirst<TextField>(NotificationName).value = GetNotificationAsText();
+		private void UpdateContent()
+		{
+			FindFirst<GroupBox>(PopupGroupName).text = GetNotificationTitle();
+			FindFirst<TextField>(NotificationName).value = GetNotificationAsText();
+		}
 
-		private String GetNotificationAsText() => $"{m_Notification.Message}\n\n" +
-		                                          $"Case ID: {m_Notification.CaseId}\n" +
-		                                          $"Player ID: {m_Notification.PlayerId}\n" +
-		                                          $"Project ID: {m_Notification.ProjectId}\n" +
-		                                          $"Server ID: {m_Notification.Id}\n" +
-		                                          $"Type: {m_Notification.Type}\n" +
-		                                          $"Created at: {m_Notification.CreatedAt}";
+		private String GetNotificationTitle() => m_Notification?["Type"];
+
+		private String GetNotificationAsText() => $"{m_Notification?["Message"]}\n\n" +
+		                                          $"Case ID: {m_Notification?["CaseId"]}\n" +
+		                                          $"Player ID: {m_Notification?["PlayerId"]}\n" +
+		                                          $"Project ID: {m_Notification?["ProjectId"]}";
 
 		protected override void OnRegisterEvents()
 		{
@@ -95,10 +84,13 @@ namespace CodeSmile.GamingServices
 			Hide();
 		}
 
-		private async Task<Boolean> Show(Notification notification)
+		public async Task<Boolean> Show(Dictionary<String, String> notification)
 		{
 			if (s_ShowModalPopup != null)
-				throw new InvalidOperationException("popup already showing");
+			{
+				Debug.LogWarning("popup already showing");
+				return false;
+			}
 
 			m_Notification = notification;
 			gameObject.SetActive(true);
@@ -148,22 +140,19 @@ namespace CodeSmile.GamingServices
 				{
 					Debug.LogWarning("Popup already showing...");
 					m_ShowPopup = false;
-					return;
 				}
 
-				EditorApplication.delayCall += async () => m_ShowPopup = await ShowModal(NotificationFromTestNotification());
+				EditorApplication.delayCall += async () => m_ShowPopup = await Show(NotificationFromTestNotification());
 			}
 		}
 
-		private Notification NotificationFromTestNotification() => new()
+		private Dictionary<String, String> NotificationFromTestNotification() => new()
 		{
-			Id = m_TestNotification.Id,
-			CaseId = m_TestNotification.CaseId,
-			Message = m_TestNotification.Message,
-			PlayerId = m_TestNotification.PlayerId,
-			ProjectId = m_TestNotification.ProjectId,
-			Type = m_TestNotification.Type,
-			CreatedAt = m_TestNotification.CreatedAt,
+			{ "Type", m_TestNotification.Type },
+			{ "CaseId", m_TestNotification.CaseId },
+			{ "PlayerId", m_TestNotification.PlayerId },
+			{ "ProjectId", m_TestNotification.ProjectId },
+			{ "Message", m_TestNotification.Message },
 		};
 #endif
 	}
