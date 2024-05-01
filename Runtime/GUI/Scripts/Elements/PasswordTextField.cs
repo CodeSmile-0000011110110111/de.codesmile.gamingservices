@@ -36,6 +36,10 @@ namespace CodeSmile.GamingServices.GUI.Elements
 			//maxLength = m_Password.LengthMax; // DON'T! The user might unknowingly submit a cropped password!
 			textEdition.isPassword = true;
 
+			AddErrorLabel();
+			AddUnmaskButton();
+			SetIsPassword(textEdition.isPassword);
+
 			RegisterCallback<AttachToPanelEvent>(e =>
 			{
 				SetIsPassword(textEdition.isPassword);
@@ -44,18 +48,18 @@ namespace CodeSmile.GamingServices.GUI.Elements
 			RegisterCallback<DetachFromPanelEvent>(e =>
 			{
 				UnregisterCallback<InputEvent>(OnUserInput);
+				ShowErrorLabel(false);
 			});
 			RegisterCallback<TooltipEvent>(evt => UpdateTooltip(m_Password));
-
-			AddErrorLabel();
-			AddUnmaskButton();
-			SetIsPassword(textEdition.isPassword);
+			RegisterCallback<FocusInEvent>(evt => UpdateErrorLabel(m_Password));
 		}
 
 		private void AddErrorLabel()
 		{
-			var m_ErrorLabel = new Label();
+			m_ErrorLabel.style.color = ErrorLabelColor;
+			m_ErrorLabel.name = "error-label";
 			Add(m_ErrorLabel);
+			ShowErrorLabel(false);
 		}
 
 		private void AddUnmaskButton()
@@ -83,36 +87,16 @@ namespace CodeSmile.GamingServices.GUI.Elements
 			UpdateErrorLabel(m_Password);
 		}
 
-		protected virtual void UpdateTooltip(Password password)
-		{
-			var requires = password.Requires;
-			var hasRequirements = requires.LowercaseCount > 0 || requires.UppercaseCount > 0 || requires.DigitCount > 0 ||
-			                      requires.SymbolCount > 0;
-			var validSymbols = Regex.Unescape(requires.ValidSymbols);
-			tooltip = $"Password is case sensitive; between {requires.MinLength} to {requires.MaxLength} characters; " +
-			          $"valid characters are english alphabet letters, digits, and the symbols {validSymbols}" +
-			          (hasRequirements
-				          ? "\n\nRequires at least:\n" +
-				            (requires.LowercaseCount > 0 ? $"{requires.LowercaseCount} lowercase letter(s)\n" : "") +
-				            (requires.UppercaseCount > 0 ? $"{requires.UppercaseCount} uppercase letter(s)\n" : "") +
-				            (requires.DigitCount > 0 ? $"{requires.DigitCount} digit(s)\n" : "") +
-				            (requires.SymbolCount > 0 ? $"{requires.SymbolCount} symbol(s)" : "")
-				          : "");
-		}
-
 		protected virtual void UpdateErrorLabel(Password password)
 		{
 			var validationState = password.Validate();
 			var isValid = validationState == Password.ValidationState.Valid;
 			m_ErrorLabel.text = isValid ? String.Empty : validationState.ToString();
-			ShowErrorLabel(!isValid);
+			ShowErrorLabel(!isValid && password.Value != String.Empty);
 		}
 
-		protected void ShowErrorLabel(Boolean show)
-		{
-			var displayStyle = show ? DisplayStyle.Flex : DisplayStyle.None;
-			m_ErrorLabel.style.display = new StyleEnum<DisplayStyle>(displayStyle);
-		}
+		protected void ShowErrorLabel(Boolean show) =>
+			m_ErrorLabel.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
 
 		private void OnUnmaskButtonClicked(ClickEvent evt) => SetIsPassword(!textEdition.isPassword);
 
@@ -128,6 +112,23 @@ namespace CodeSmile.GamingServices.GUI.Elements
 			m_UnmaskButton.style.backgroundImage = new StyleBackground(icon);
 			m_UnmaskButton.style.width = m_UnmaskButton.style.minWidth = MaskIconSize.x;
 			m_UnmaskButton.style.height = m_UnmaskButton.style.minHeight = MaskIconSize.y;
+		}
+
+		protected virtual void UpdateTooltip(Password password)
+		{
+			var requires = password.Requires;
+			var hasRequirements = requires.LowercaseCount > 0 || requires.UppercaseCount > 0 || requires.DigitCount > 0 ||
+			                      requires.SymbolCount > 0;
+			var validSymbols = Regex.Unescape(requires.ValidSymbols);
+			tooltip = $"Password is case sensitive; between {requires.MinLength} to {requires.MaxLength} characters; " +
+			          $"valid characters are english alphabet letters, digits, and the symbols {validSymbols}" +
+			          (hasRequirements
+				          ? "\n\nRequires at least:\n" +
+				            (requires.LowercaseCount > 0 ? $"{requires.LowercaseCount} lowercase letter(s)\n" : "") +
+				            (requires.UppercaseCount > 0 ? $"{requires.UppercaseCount} uppercase letter(s)\n" : "") +
+				            (requires.DigitCount > 0 ? $"{requires.DigitCount} digit(s)\n" : "") +
+				            (requires.SymbolCount > 0 ? $"{requires.SymbolCount} symbol(s)" : "")
+				          : "");
 		}
 	}
 }

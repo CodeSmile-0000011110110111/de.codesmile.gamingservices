@@ -33,7 +33,7 @@ namespace CodeSmile.GamingServices.Authentication
 		private const Int32 DefaultMinLength = 8;
 		private const Int32 DefaultMaxLength = 30;
 
-		private const String DefaultValidSymbols = @"!""#$%&'´`()*+-.,/\\:;<=>?@^_{|}~\[\]";
+		private const String DefaultValidSymbols = @"?!.:;,_#§$%&@""´'`°^~*+-/\\|<=>(){}\[\]";
 
 		private const String CountLowercasePattern = "(?=.*[a-z])";
 		private const String CountUppercasePattern = "(?=.*[A-Z])";

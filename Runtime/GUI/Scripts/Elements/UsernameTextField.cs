@@ -3,6 +3,7 @@
 
 using CodeSmile.GamingServices.Authentication;
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
@@ -15,10 +16,15 @@ namespace CodeSmile.GamingServices.GUI.Elements
 	///     displays a label if the input is invalid, indicating what's wrong (too short/long, invalid symbol).
 	/// </summary>
 	[UxmlElement]
-	public partial class UsernameTextField : TextField
+	public partial class UsernameTextField : VisualElement
 	{
-		private readonly Label m_ErrorLabel = new();
-		private Username m_Username = new();
+		private const String ElementPath = ResourcePath.UiElementsRoot + nameof(UsernameTextField);
+		private const String TextFieldName = "username-textfield";
+		private const String ErrorLabelName = "error-label";
+
+		private readonly TextField m_TextField;
+		private readonly Label m_ErrorLabel;
+		private Username m_Username;
 
 		[Header("Input Handling")]
 		/// <summary>
@@ -28,8 +34,6 @@ namespace CodeSmile.GamingServices.GUI.Elements
 		[Tooltip("If checked, typing invalid characters replaces them with a valid symbol. If unchecked, " +
 		         "invalid input is allowed and while Username is invalid, an error label is shown.")]
 		[UxmlAttribute] private Boolean SanitizeInput { get; set; } = true;
-		[Header("Error Label")]
-		[UxmlAttribute] private Color ErrorLabelColor { get; set; } = new(.5f, 0f, 0f);
 
 		/// <summary>
 		///     The Username instance synchronized with the text field.
@@ -37,39 +41,45 @@ namespace CodeSmile.GamingServices.GUI.Elements
 		public Username Username { get => m_Username; set => m_Username = value ?? new Username(); }
 
 		public UsernameTextField()
-		{
-			style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Column);
-			maxLength = Username.Requires.MaxLength;
+			: this(null) {}
 
-			m_ErrorLabel.style.color = ErrorLabelColor;
-			Add(m_ErrorLabel);
+		public UsernameTextField(Username username = null)
+		{
+			m_Username = username ?? new Username();
+
+			LoadDocumentAndStylesheet();
+			m_TextField = this.Q<TextField>(TextFieldName) ?? throw new MissingReferenceException(TextFieldName);
+			m_ErrorLabel = this.Q<Label>(ErrorLabelName) ?? throw new MissingReferenceException(ErrorLabelName);
+
+			m_TextField.maxLength = m_Username.Requires.MaxLength;
+			ShowErrorLabel(false);
 
 			RegisterCallback<AttachToPanelEvent>(e => RegisterCallback<InputEvent>(OnUserInput));
 			RegisterCallback<DetachFromPanelEvent>(e => UnregisterCallback<InputEvent>(OnUserInput));
 			RegisterCallback<TooltipEvent>(evt => UpdateTooltip(m_Username));
 			RegisterCallback<FocusInEvent>(evt => UpdateErrorLabel(m_Username));
-			RegisterCallback<FocusOutEvent>(evt => ShowErrorLabel(false));
+		}
+
+		private void LoadDocumentAndStylesheet()
+		{
+			var uxml = Resources.Load<VisualTreeAsset>(ElementPath) ?? throw new FileNotFoundException("uxml", ElementPath);
+			var uss = Resources.Load<StyleSheet>(ElementPath) ?? throw new FileNotFoundException("uss", ElementPath);
+
+			uxml.CloneTree(this);
+			styleSheets.Add(uss);
 		}
 
 		protected virtual void OnUserInput(InputEvent evt)
 		{
-			m_Username.Value = text;
+			m_Username.Value = m_TextField.text;
 
 			if (SanitizeInput)
 			{
 				m_Username.Value = m_Username.GetSanitized();
-				SetValueWithoutNotify(m_Username.Value);
+				m_TextField.SetValueWithoutNotify(m_Username.Value);
 			}
 			else
 				UpdateErrorLabel(m_Username);
-		}
-
-		protected virtual void UpdateTooltip(Username username)
-		{
-			var requires = username.Requires;
-			var validSymbols = Regex.Unescape(requires.ValidSymbols);
-			tooltip = $"Username is case insensitive; between {requires.MinLength} to {requires.MaxLength} characters; " +
-			          $"valid characters are english alphabet letters, digits, and the symbols {validSymbols}";
 		}
 
 		protected virtual void UpdateErrorLabel(Username username)
@@ -77,13 +87,18 @@ namespace CodeSmile.GamingServices.GUI.Elements
 			var validationState = username.Validate();
 			var isValid = validationState == Username.ValidationState.Valid;
 			m_ErrorLabel.text = isValid ? String.Empty : validationState.ToString();
-			ShowErrorLabel(!SanitizeInput && !isValid);
+			ShowErrorLabel(!SanitizeInput && !isValid && username.Value != String.Empty);
 		}
 
-		protected void ShowErrorLabel(Boolean show)
+		protected void ShowErrorLabel(Boolean show) =>
+			m_ErrorLabel.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+
+		protected virtual void UpdateTooltip(Username username)
 		{
-			var displayStyle = show ? DisplayStyle.Flex : DisplayStyle.None;
-			m_ErrorLabel.style.display = new StyleEnum<DisplayStyle>(displayStyle);
+			var requires = username.Requires;
+			var validSymbols = Regex.Unescape(requires.ValidSymbols);
+			tooltip = $"Username is case insensitive; between {requires.MinLength} to {requires.MaxLength} characters; " +
+			          $"valid characters are english alphabet letters, digits, and the symbols {validSymbols}";
 		}
 	}
 }
