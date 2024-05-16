@@ -3,6 +3,7 @@
 
 using CodeSmile.GamingServices.Authentication;
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
@@ -11,11 +12,17 @@ using UnityEngine.UIElements;
 namespace CodeSmile.GamingServices.GUI.Elements
 {
 	[UxmlElement]
-	public partial class PasswordTextField : TextField
+	public partial class PasswordTextField : VisualElement
 	{
-		private readonly Label m_ErrorLabel = new();
-		private readonly Button m_UnmaskButton = new();
-		private Password m_Password = new();
+		private const String ElementPath = ResourcePath.UiElementsRoot + nameof(PasswordTextField);
+		private const String TextFieldName = "password-textfield";
+		private const String UnmaskButtonName = "unmask-button";
+		private const String ErrorLabelName = "error-label";
+
+		private readonly TextField m_TextField;
+		private readonly Label m_ErrorLabel;
+		private readonly Button m_UnmaskButton;
+		private readonly Password m_Password;
 
 		[Header("Show/Hide Button")]
 		[UxmlAttribute] private Texture2D MaskedIcon { get; set; }
@@ -28,62 +35,51 @@ namespace CodeSmile.GamingServices.GUI.Elements
 		/// <summary>
 		///     The Username instance synchronized with the text field.
 		/// </summary>
-		public Password Password { get => m_Password; set => m_Password = value ?? new Password(); }
+		public Password Password => m_Password;
 
 		public PasswordTextField()
-		{
-			style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Column);
-			//maxLength = m_Password.LengthMax; // DON'T! The user might unknowingly submit a cropped password!
-			textEdition.isPassword = true;
+			: this(null) {}
 
-			AddErrorLabel();
-			AddUnmaskButton();
-			SetIsPassword(textEdition.isPassword);
+		public PasswordTextField(Password password)
+		{
+			m_Password = password ?? new Password();
+
+			LoadDocumentAndStylesheet();
+			m_TextField = this.Q<TextField>(TextFieldName) ?? throw new MissingReferenceException(TextFieldName);
+			m_UnmaskButton = this.Q<Button>(UnmaskButtonName) ?? throw new MissingReferenceException(UnmaskButtonName);
+			m_ErrorLabel = this.Q<Label>(ErrorLabelName) ?? throw new MissingReferenceException(ErrorLabelName);
+
+			m_TextField.SetValueWithoutNotify(m_Password.Value ?? String.Empty);
+			UpdateErrorLabel(m_Password);
 
 			RegisterCallback<AttachToPanelEvent>(e =>
 			{
-				SetIsPassword(textEdition.isPassword);
 				RegisterCallback<InputEvent>(OnUserInput);
+				m_UnmaskButton.RegisterCallback<ClickEvent>(OnUnmaskButtonClicked);
+				SetIsPassword(m_TextField.textEdition.isPassword);
 			});
 			RegisterCallback<DetachFromPanelEvent>(e =>
 			{
 				UnregisterCallback<InputEvent>(OnUserInput);
+				m_UnmaskButton.UnregisterCallback<ClickEvent>(OnUnmaskButtonClicked);
 				ShowErrorLabel(false);
 			});
 			RegisterCallback<TooltipEvent>(evt => UpdateTooltip(m_Password));
-			RegisterCallback<FocusInEvent>(evt => UpdateErrorLabel(m_Password));
+			//RegisterCallback<FocusInEvent>(evt => UpdateErrorLabel(m_Password));
 		}
 
-		private void AddErrorLabel()
+		private void LoadDocumentAndStylesheet()
 		{
-			m_ErrorLabel.style.color = ErrorLabelColor;
-			m_ErrorLabel.name = "error-label";
-			Add(m_ErrorLabel);
-			ShowErrorLabel(false);
-		}
+			var uxml = Resources.Load<VisualTreeAsset>(ElementPath) ?? throw new FileNotFoundException("uxml", ElementPath);
+			var uss = Resources.Load<StyleSheet>(ElementPath) ?? throw new FileNotFoundException("uss", ElementPath);
 
-		private void AddUnmaskButton()
-		{
-			m_UnmaskButton.text = "*";
-			m_UnmaskButton.style.position = Position.Absolute;
-			m_UnmaskButton.style.right = 0f;
-			m_UnmaskButton.style.alignSelf = Align.Center;
-			m_UnmaskButton.style.paddingTop = m_UnmaskButton.style.paddingBottom = 0f;
-			m_UnmaskButton.style.paddingLeft = m_UnmaskButton.style.paddingRight = 0f;
-			m_UnmaskButton.style.marginTop = m_UnmaskButton.style.marginBottom = 2f;
-			m_UnmaskButton.style.marginLeft = m_UnmaskButton.style.marginRight = 2f;
-			m_UnmaskButton.style.backgroundColor = Color.clear;
-			m_UnmaskButton.style.borderTopWidth = m_UnmaskButton.style.borderBottomWidth = 0f;
-			m_UnmaskButton.style.borderLeftWidth = m_UnmaskButton.style.borderRightWidth = 0f;
-			Add(m_UnmaskButton);
-
-			m_UnmaskButton.UnregisterCallback<ClickEvent>(OnUnmaskButtonClicked);
-			m_UnmaskButton.RegisterCallback<ClickEvent>(OnUnmaskButtonClicked);
+			uxml.CloneTree(this);
+			styleSheets.Add(uss);
 		}
 
 		protected virtual void OnUserInput(InputEvent evt)
 		{
-			m_Password.Value = text;
+			m_Password.Value = m_TextField.text;
 			UpdateErrorLabel(m_Password);
 		}
 
@@ -98,18 +94,17 @@ namespace CodeSmile.GamingServices.GUI.Elements
 		protected void ShowErrorLabel(Boolean show) =>
 			m_ErrorLabel.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
 
-		private void OnUnmaskButtonClicked(ClickEvent evt) => SetIsPassword(!textEdition.isPassword);
+		private void OnUnmaskButtonClicked(ClickEvent evt) => SetIsPassword(!m_TextField.textEdition.isPassword);
 
 		private void SetIsPassword(Boolean isMasked)
 		{
-			textEdition.isPassword = isMasked;
+			m_TextField.textEdition.isPassword = isMasked;
 			SetMaskButtonBackgroundImage(isMasked);
 		}
 
 		private void SetMaskButtonBackgroundImage(Boolean isMasked)
 		{
-			var icon = isMasked ? MaskedIcon : UnmaskedIcon;
-			m_UnmaskButton.style.backgroundImage = new StyleBackground(icon);
+			m_UnmaskButton.style.backgroundImage = isMasked ? MaskedIcon : UnmaskedIcon;
 			m_UnmaskButton.style.width = m_UnmaskButton.style.minWidth = MaskIconSize.x;
 			m_UnmaskButton.style.height = m_UnmaskButton.style.minHeight = MaskIconSize.y;
 		}

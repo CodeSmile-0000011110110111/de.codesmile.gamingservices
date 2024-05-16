@@ -3,10 +3,13 @@
     "rootNamespace": "CodeSmile.Tests",
     "references": [
         "UnityEngine.TestRunner",
+        "CodeSmile.GamingServices",
+        "Unity.Services.Authentication",
+        "Unity.Services.CloudCode",
+        "Unity.Services.CloudSave",
         "Unity.Services.Core",
         "Unity.Services.Core.Environments",
-        "Unity.Services.Authentication",
-        "CodeSmile.GamingServices"
+        "Unity.Services.CloudCode.GeneratedBindings"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

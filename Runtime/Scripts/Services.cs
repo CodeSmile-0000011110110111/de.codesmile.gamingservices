@@ -38,6 +38,9 @@ namespace CodeSmile.GamingServices
 
 		internal static async void HandleServiceException(Exception ex)
 		{
+			if (OnServiceRequestFailed == null)
+				return;
+
 			// Notify the player with the proper error message
 			var errorReason = ex.Message;
 			var errorCode = -1;
@@ -47,7 +50,7 @@ namespace CodeSmile.GamingServices
 				errorCode = failed.ErrorCode;
 			}
 
-			await OnServiceRequestFailed?.Invoke(ex, errorReason, errorCode);
+			await OnServiceRequestFailed.Invoke(ex, errorReason, errorCode);
 		}
 
 		private static String GetErrorReason(Int32 errorCode)

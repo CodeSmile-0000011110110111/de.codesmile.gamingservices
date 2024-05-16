@@ -21,6 +21,17 @@ namespace CodeSmile.GamingServices.Authentication
 		private static IAuthenticationService AuthService => AuthenticationService.Instance;
 
 		/// <summary>
+		/// Returns true if the account is anonymous, meaning it has not been linked with an ID provider nor
+		/// did the user sign up with username/password.
+		/// </summary>
+		/// <returns></returns>
+		public static async Task<Boolean> IsAnonymous()
+		{
+			var playerInfo = await GetPlayerInfoAsync();
+			return playerInfo.Identities?.Count == 0 && String.IsNullOrEmpty(playerInfo.Username);
+		}
+
+		/// <summary>
 		///     Returns true if the playerName is valid.
 		/// </summary>
 		/// <remarks>
@@ -80,7 +91,7 @@ namespace CodeSmile.GamingServices.Authentication
 		public static async Task<PlayerInfo> GetPlayerInfoAsync()
 		{
 			var info = AuthService.PlayerInfo;
-			if (info == null)
+			if (info == null || info.CreatedAt == null)
 			{
 				try
 				{

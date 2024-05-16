@@ -24,7 +24,7 @@ namespace CodeSmile.GamingServices.GUI.Elements
 
 		private readonly TextField m_TextField;
 		private readonly Label m_ErrorLabel;
-		private Username m_Username;
+		private readonly Username m_Username;
 
 		[Header("Input Handling")]
 		/// <summary>
@@ -33,17 +33,17 @@ namespace CodeSmile.GamingServices.GUI.Elements
 		/// </summary>
 		[Tooltip("If checked, typing invalid characters replaces them with a valid symbol. If unchecked, " +
 		         "invalid input is allowed and while Username is invalid, an error label is shown.")]
-		[UxmlAttribute] private Boolean SanitizeInput { get; set; } = true;
+		[UxmlAttribute] private Boolean SanitizeInputWhileTyping { get; set; } = true;
 
 		/// <summary>
 		///     The Username instance synchronized with the text field.
 		/// </summary>
-		public Username Username { get => m_Username; set => m_Username = value ?? new Username(); }
+		public Username Username => m_Username;
 
 		public UsernameTextField()
 			: this(null) {}
 
-		public UsernameTextField(Username username = null)
+		public UsernameTextField(Username username)
 		{
 			m_Username = username ?? new Username();
 
@@ -52,12 +52,13 @@ namespace CodeSmile.GamingServices.GUI.Elements
 			m_ErrorLabel = this.Q<Label>(ErrorLabelName) ?? throw new MissingReferenceException(ErrorLabelName);
 
 			m_TextField.maxLength = m_Username.Requires.MaxLength;
-			ShowErrorLabel(false);
+			m_TextField.SetValueWithoutNotify(m_Username.Value ?? string.Empty);
+			UpdateErrorLabel(m_Username);
 
 			RegisterCallback<AttachToPanelEvent>(e => RegisterCallback<InputEvent>(OnUserInput));
 			RegisterCallback<DetachFromPanelEvent>(e => UnregisterCallback<InputEvent>(OnUserInput));
 			RegisterCallback<TooltipEvent>(evt => UpdateTooltip(m_Username));
-			RegisterCallback<FocusInEvent>(evt => UpdateErrorLabel(m_Username));
+			//RegisterCallback<FocusInEvent>(evt => UpdateErrorLabel(m_Username));
 		}
 
 		private void LoadDocumentAndStylesheet()
@@ -73,7 +74,7 @@ namespace CodeSmile.GamingServices.GUI.Elements
 		{
 			m_Username.Value = m_TextField.text;
 
-			if (SanitizeInput)
+			if (SanitizeInputWhileTyping)
 			{
 				m_Username.Value = m_Username.GetSanitized();
 				m_TextField.SetValueWithoutNotify(m_Username.Value);
@@ -87,7 +88,7 @@ namespace CodeSmile.GamingServices.GUI.Elements
 			var validationState = username.Validate();
 			var isValid = validationState == Username.ValidationState.Valid;
 			m_ErrorLabel.text = isValid ? String.Empty : validationState.ToString();
-			ShowErrorLabel(!SanitizeInput && !isValid && username.Value != String.Empty);
+			ShowErrorLabel(!SanitizeInputWhileTyping && !isValid && username.Value != String.Empty);
 		}
 
 		protected void ShowErrorLabel(Boolean show) =>

@@ -94,6 +94,9 @@ namespace CodeSmile.GamingServices.Authentication
 			if (username == null)
 				return String.Empty;
 
+			// username is case insensitive (lowercase only)
+			username = username.ToLower();
+
 			// invalid symbols are replaced with the first valid symbol
 			if (String.IsNullOrEmpty(invalidPattern) == false)
 				username = Regex.Replace(username, invalidPattern, replacementChar);

@@ -1,7 +1,19 @@
 {
     "name": "CodeSmileEditor.GamingServices",
     "rootNamespace": "CodeSmileEditor.GamingServices",
-    "references": [],
+    "references": [
+        "GUID:fe25561d224ed4743af4c60938a59d0b",
+        "GUID:1c66728ad60364b82bf095d383b87458",
+        "GUID:4077802dea91b4b6d878b48b4160bd81",
+        "GUID:d0d897c4aa12b8140b650ec29e099ff7",
+        "GUID:614c328814c3e4cb89d08dcc15048513",
+        "GUID:70ea675efa2644cef98c7ece24158333",
+        "GUID:9e6ed7d51349b45518022aa545ab7e0b",
+        "GUID:4fc462806a32aa245a7b28367381bf24",
+        "GUID:7a3effa9f908d4e8a88877e048cf05dd",
+        "GUID:7796ff3b303ba8246814b41eabf53b4c",
+        "GUID:d90266198702e6b4ea34207f3309ff0c"
+    ],
     "includePlatforms": [
         "Editor"
     ],

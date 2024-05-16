@@ -41,13 +41,13 @@ namespace CodeSmile.Tests
 		[TestCase("  ", "__")]
 		[TestCase(" 1 2 3 ", "_1_2_3_")]
 		[TestCase("!()$%+#?", "________")]
-		[TestCase("-My= Na`me.", "-My__Na_me.")]
+		[TestCase("-My= Na`me.", "-my__na_me.")]
 		[TestCase("12", "12")] // too short
 		[TestCase("                         ", "____________________")] // too long
 		[TestCase("00                      0", "00__________________")] // too long
 		[TestCase("01234567890123456789.123", "01234567890123456789")] // too long
 		[TestCase(" 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ", "_0_1_2_3_4_5_6_7_8_9")] // too long
-		[TestCase("_Valid.User@Name-123", "_Valid.User@Name-123")]
+		[TestCase("_Valid.User@Name-123", "_valid.user@name-123")]
 		public void SanitizedName_ReplacesInvalidUsernameSymbols(String name, String expected)
 		{
 			Assert.AreEqual(expected, new Username(name).GetSanitized());
